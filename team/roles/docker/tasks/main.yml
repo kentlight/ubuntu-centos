@@ -1,0 +1,90 @@
+# tasks file for ../ansible_study/roles/docker
+- name: Install required packages for Docker
+  package:
+    name:
+      - "{{ item }}"
+    state: present
+  loop:
+    - apt-transport-https
+    - ca-certificates
+    - curl
+    - gnupg
+    - lsb-release
+    - python3-apt
+  when: ansible_pkg_mgr == 'apt'
+
+- name: Install required packages for Docker
+  package:
+    name:
+      - "{{ item }}"
+    state: present
+  loop:
+    - yum-utils
+    - device-mapper-persistent-data
+    - lvm2
+    - python3-apt
+  when: ansible_pkg_mgr == 'yum'
+
+- name: Add Docker GPG key
+  when: ansible_pkg_mgr == 'apt'
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Add Docker APT repository
+  when: ansible_pkg_mgr == 'apt'
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    state: present
+
+- name: Add Docker Yum repository
+  when: ansible_pkg_mgr == 'yum'
+  yum_repository:
+    name: docker-ce-stable
+    description: Docker CE Stable - $basearch
+    baseurl: https://download.docker.com/linux/centos/7/$basearch/stable
+    gpgcheck: yes
+    gpgkey: https://download.docker.com/linux/centos/gpg
+    enabled: yes
+
+- name: Install pip for Ubuntu
+  apt:
+    name: python3-pip
+    state: present
+  when: ansible_pkg_mgr == 'apt'
+
+- name: Install pip for CentOS
+  yum:
+    name: python3-pip
+    state: present
+  when: ansible_pkg_mgr == 'yum'
+
+- name: Install pip for other OS
+  package:
+    name: python3-pip
+    state: present
+  when: ansible_pkg_mgr == 'unknown'
+
+- name: Install Docker Engine
+  package:
+    name:
+      - docker
+    state: present
+
+- name: Start and enable Docker service
+  service:
+    name: docker
+    state: started
+    enabled: yes
+
+#- name: Install Docker Python library
+#  pip:
+#    name: docker
+#    state: present
+
+#- name: Run Ubuntu container
+#  docker_container:
+#    name: ubuntu_container
+#    image: ubuntu
+#    state: started
+#    command: sleep infinity
